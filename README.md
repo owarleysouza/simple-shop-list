@@ -1,4 +1,4 @@
-# Simple Shop List
+# Simple Shop List - Versão Web
 
 ## 1. Conceito
 
@@ -26,7 +26,7 @@ O Simple Shop List é um aplicativo projetado para facilitar a organização e o
 
 ### Lógica de Usuário
 
-Por ser uma a aplicação simples, foi utilizado o Firestore do Firebase para armazenar os dados dos produtos. Cada documento de produto adicionado carrega consigo o id do usuário na coleção de produtos. A estrutura do Firestore permite uma busca eficiente e a sincronização em tempo real dos dados através da busca com query trazendo apenas os produtos daquele usuário de forma simples.
+Por ser uma a aplicação simples, foi utilizado o Firestore do Firebase para armazenar os dados dos produtos. Cada documento de produto adicionado carrega consigo o id do usuário - identificador anônimo criado no primeiro acesso no dispositivo- na coleção de produtos. A estrutura do Firestore permite uma busca eficiente e a sincronização em tempo real dos dados através da busca com query trazendo apenas os produtos daquele usuário de forma simples.
 
 ### Salvar Produtos
 
