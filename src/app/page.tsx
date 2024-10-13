@@ -5,21 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form';
 import { useProductStore } from '@/store/store';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
@@ -28,6 +14,9 @@ import { db } from '@/lib/firebase';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import LoadingComponent from '@/components/commom/Loading';
 import { Product } from '@/types/Product';
+import FormInputField from '@/components/Form/FormInput';
+import FormSelectField from '@/components/Form/FormSelect';
+import FormNumberField from '@/components/Form/FormNumber';
 
 const formSchema = z.object({
   name: z.string().min(2).max(30),
@@ -115,93 +104,55 @@ export default function Home() {
                 className="flex flex-wrap"
                 aria-label="Formulário de adição de produtos"
               >
-                <FormField
+                <FormInputField
                   control={form.control}
                   name="name"
-                  render={({ field }) => (
-                    <FormItem className="w-full md:w-1/3 px-1 min-w-[150px] sm:w-full">
-                      <FormLabel htmlFor="product-name">Item</FormLabel>
-                      <FormControl className="bg-white">
-                        <Input {...field} id="product-name" />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label="Item"
+                  id="product-name"
+                  className="md:w-1/3 min-w-[150px] sm:w-full"
+                  placeholder="Digite o nome do item"
                 />
 
                 <div className="flex flex-row md:w-1/3 px-1 w-full">
-                  <FormField
+                  <FormNumberField
                     control={form.control}
                     name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="product-quantity">
-                          Quantidade
-                        </FormLabel>
-                        <FormControl className="bg-white">
-                          <Input
-                            {...field}
-                            id="product-quantity"
-                            type="number"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
+                    label="Quantidade"
+                    id="product-quantity"
+                    placeholder="Digite a quantidade"
                   />
 
-                  <FormField
+                  <FormSelectField
                     control={form.control}
                     name="unity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="product-unity">Unidade</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl className="bg-white">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione uma unidade" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Un.">Un.</SelectItem>
-                            <SelectItem value="Kg">Kg</SelectItem>
-                            <SelectItem value="L">Litro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
+                    label="Unidade"
+                    id="product-unity"
+                    options={[
+                      { value: 'Un.', label: 'Un.' },
+                      { value: 'Kg', label: 'Kg' },
+                      { value: 'L', label: 'Litro' },
+                    ]}
+                    placeholder="Selecione uma unidade"
+                    className="w-20"
                   />
                 </div>
 
-                <FormField
+                <FormSelectField
                   control={form.control}
                   name="category"
-                  render={({ field }) => (
-                    <FormItem className="md:w-1/3 px-1 w-full">
-                      <FormLabel htmlFor="product-category">
-                        Categoria
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl className="bg-white">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma categoria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="bakery">Padaria</SelectItem>
-                          <SelectItem value="hortifruti">Hortifruti</SelectItem>
-                          <SelectItem value="protein">Proteína</SelectItem>
-                          <SelectItem value="beverage">Bebida</SelectItem>
-                          <SelectItem value="grocery">Mercearia</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
+                  label="Categoria"
+                  id="product-category"
+                  options={[
+                    { value: 'bakery', label: 'Padaria' },
+                    { value: 'hortifruti', label: 'Hortifruti' },
+                    { value: 'protein', label: 'Proteína' },
+                    { value: 'beverage', label: 'Bebida' },
+                    { value: 'grocery', label: 'Mercearia' },
+                  ]}
+                  placeholder="Selecione uma categoria"
+                  className="md:w-1/3 px-1 w-full"
                 />
+
                 <div className="w-full md:w-1/8 px-1 flex justify-end items-end mt-1">
                   <Button
                     type="submit"
