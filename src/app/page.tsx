@@ -35,8 +35,19 @@ const formSchema = z.object({
   category: z.string(),
 });
 
+import { db } from '@/lib/firebase';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { Product } from '@/types/Product';
+import { useEffect, useState } from 'react';
+import LoadingComponent from '@/components/commom/Loading';
+import { LoaderCircle } from 'lucide-react';
+
+import { useToast } from '@/hooks/use-toast';
+
 export default function Home() {
   const { products, addProduct } = useProductStore();
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingAddProduct, setLoadingAddProduct] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,14 +59,84 @@ export default function Home() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const { toast } = useToast();
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoadingAddProduct(true);
     const newProduct = {
-      id: Math.random(),
-      checked: true,
       ...values,
+      checked: false,
     };
-    addProduct(newProduct);
+
+    const userId = getOrCreateUserId();
+
+    try {
+      const { id } = await addDoc(collection(db, 'products'), {
+        ...newProduct,
+        userId,
+      });
+
+      addProduct({ ...newProduct, id: id });
+      form.reset();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ops! Algo de errado aconteceu',
+        description: 'Um erro inesperado aconteceu ao adicionar o produto',
+      });
+      console.error(error);
+    } finally {
+      setLoadingAddProduct(false);
+    }
   }
+
+  function getOrCreateUserId(): string {
+    let userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      userId = crypto.randomUUID();
+      localStorage.setItem('userId', userId);
+    }
+
+    return userId;
+  }
+
+  async function getProductsByUser() {
+    try {
+      const userId = getOrCreateUserId();
+      const q = query(
+        collection(db, 'products'),
+        where('userId', '==', userId)
+      );
+
+      const productSnapshot = await getDocs(q);
+
+      productSnapshot.docs.map((doc) => {
+        const product: Product = {
+          id: doc.id,
+          name: doc.data().name,
+          category: doc.data().category,
+          quantity: doc.data().quantity,
+          unity: doc.data().unity,
+          checked: doc.data().checked,
+        };
+        addProduct(product);
+      });
+
+      setLoadingProducts(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ops! Algo de errado aconteceu',
+        description: 'Um erro inesperado aconteceu ao carregar os produtos',
+      });
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    getProductsByUser();
+  }, []);
 
   return (
     <main className="min-h-screen bg-mysecondary lg:px-64 md:px-32 px-8 py-6">
@@ -63,110 +144,131 @@ export default function Home() {
         <h1 className="text-3xl text-myprimary font-bold">Lista de Compras</h1>
       </header>
 
-      <section className="py-8">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-wrap items-end justify-center gap-4"
-            aria-label="Formulário de adição de produtos"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="w-1/3 min-w-[150px]">
-                  <FormLabel htmlFor="product-name">Item</FormLabel>
-                  <FormControl>
-                    <Input {...field} id="product-name" className="w-full" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex items-center gap-1">
-              <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                  <FormItem className="w-20">
-                    <FormLabel htmlFor="product-quantity">Quantidade</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        id="product-quantity"
-                        className="w-full"
-                        type="number"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="unity"
-                render={({ field }) => (
-                  <FormItem className="w-20">
-                    <FormLabel htmlFor="product-unity">Unidade</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl className="bg-mywhite">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma unidade" />
-                        </SelectTrigger>
+      {loadingProducts ? (
+        <LoadingComponent />
+      ) : (
+        <>
+          <section className="py-8">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-wrap items-end justify-center gap-4"
+                aria-label="Formulário de adição de produtos"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="w-1/3 min-w-[150px]">
+                      <FormLabel htmlFor="product-name">Item</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          id="product-name"
+                          className="w-full"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Un.">Un.</SelectItem>
-                        <SelectItem value="Kg">Kg</SelectItem>
-                        <SelectItem value="L">Litro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-            </div>
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem className="w-1/4 min-w-[150px]">
-                  <FormLabel htmlFor="product-category">Categoria</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl className="bg-mywhite">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="bakery">Padaria</SelectItem>
-                      <SelectItem value="hortifruti">Hortifruti</SelectItem>
-                      <SelectItem value="protein">Proteína</SelectItem>
-                      <SelectItem value="beverage">Bebida</SelectItem>
-                      <SelectItem value="grocery">Mercearia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
+                <div className="flex items-center gap-1">
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem className="w-20">
+                        <FormLabel htmlFor="product-quantity">
+                          Quantidade
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            id="product-quantity"
+                            className="w-full"
+                            type="number"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
 
-            <Button type="submit" className="bg-myaccent px-4 rounded-lg">
-              Adicionar
-            </Button>
-          </form>
-        </Form>
-      </section>
+                  <FormField
+                    control={form.control}
+                    name="unity"
+                    render={({ field }) => (
+                      <FormItem className="w-20">
+                        <FormLabel htmlFor="product-unity">Unidade</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl className="bg-mywhite">
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma unidade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Un.">Un.</SelectItem>
+                            <SelectItem value="Kg">Kg</SelectItem>
+                            <SelectItem value="L">Litro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-      <section className="space-y-4 mb-4">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </section>
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem className="w-1/4 min-w-[150px]">
+                      <FormLabel htmlFor="product-category">
+                        Categoria
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl className="bg-mywhite">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma categoria" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="bakery">Padaria</SelectItem>
+                          <SelectItem value="hortifruti">Hortifruti</SelectItem>
+                          <SelectItem value="protein">Proteína</SelectItem>
+                          <SelectItem value="beverage">Bebida</SelectItem>
+                          <SelectItem value="grocery">Mercearia</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  disabled={loadingAddProduct}
+                  className="bg-myaccent px-4 rounded-lg"
+                >
+                  {loadingAddProduct ? (
+                    <LoaderCircle className="animate-spin w-[60px]" />
+                  ) : (
+                    'Adicionar'
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </section>
+          <section className="space-y-4 mb-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </section>
+        </>
+      )}
 
       <footer className="fixed bottom-0 left-0 w-full flex flex-wrap items-center justify-center">
         Developed with 🧐 by Warley Soares.

@@ -4,8 +4,9 @@ import { create } from 'zustand';
 interface ProductStore {
   products: Product[];
   addProduct: (product: Product) => void;
-  removeProduct: (id: number) => void;
+  removeProduct: (id: string) => void;
   clearProducts: () => void;
+  toggleProductChecked: (id: string) => void;
 }
 
 export const useProductStore = create<ProductStore>((set) => ({
@@ -16,5 +17,11 @@ export const useProductStore = create<ProductStore>((set) => ({
   removeProduct: (id) => set((state) => ({
     products: state.products.filter(product => product.id !== id),
   })),
+  toggleProductChecked: (id: string) =>
+    set((state) => ({
+      products: state.products.map((product) =>
+        product.id === id ? { ...product, checked: !product.checked } : product
+      ),
+    })),
   clearProducts: () => set({ products: [] }),
 }));
