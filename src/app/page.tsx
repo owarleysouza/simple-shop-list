@@ -1,6 +1,6 @@
 'use client';
 
-import ProductCard from '@/components/ProductCard';
+import ProductCard from '@/components/Product/ProductCard';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -139,9 +139,9 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-mysecondary lg:px-64 md:px-32 px-8 py-6">
+    <main className="min-h-screen bg-secondary lg:px-64 md:px-32 px-8 py-6">
       <header className="mb-2">
-        <h1 className="text-3xl text-myprimary font-bold">Lista de Compras</h1>
+        <h1 className="text-3xl text-primary font-bold">Lista de Compras</h1>
       </header>
 
       {loadingProducts ? (
@@ -161,7 +161,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem className="w-1/3 min-w-[150px]">
                       <FormLabel htmlFor="product-name">Item</FormLabel>
-                      <FormControl>
+                      <FormControl className="bg-white">
                         <Input
                           {...field}
                           id="product-name"
@@ -181,7 +181,7 @@ export default function Home() {
                         <FormLabel htmlFor="product-quantity">
                           Quantidade
                         </FormLabel>
-                        <FormControl>
+                        <FormControl className="bg-white">
                           <Input
                             {...field}
                             id="product-quantity"
@@ -203,7 +203,7 @@ export default function Home() {
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
-                          <FormControl className="bg-mywhite">
+                          <FormControl className="bg-white">
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione uma unidade" />
                             </SelectTrigger>
@@ -231,7 +231,7 @@ export default function Home() {
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
-                        <FormControl className="bg-mywhite">
+                        <FormControl className="bg-white">
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione uma categoria" />
                           </SelectTrigger>
@@ -251,7 +251,7 @@ export default function Home() {
                 <Button
                   type="submit"
                   disabled={loadingAddProduct}
-                  className="bg-myaccent px-4 rounded-lg"
+                  className="bg-accent px-4 rounded-lg"
                 >
                   {loadingAddProduct ? (
                     <LoaderCircle className="animate-spin w-[60px]" />

@@ -7,20 +7,7 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
-		colors: {
-      'myprimary': '#0FA968',
-			'mysecondary':'#EFFEF7',
-			'myaccent':'#43E5A0',
-			'mygrey': '#a3a3a3',
-			'myred': '#fee2e2',
-			'myyellow': '#fef9c3',
-			'myblue': '#cffafe',
-			'mygreen': '#dcfce7',
-			'mypink': '#fbcfe8',
-			'mywhite': '#ffffff',
-			'myblack': '#000000'
-    },
+  theme: { 
   	extend: {
   		colors: {
   			background: 'hsl(var(--background))',

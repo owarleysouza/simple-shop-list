@@ -1,6 +1,6 @@
 import { Product } from '@/types/Product';
 import { Trash } from 'lucide-react';
-import { Checkbox } from './ui/checkbox';
+import { Checkbox } from '../ui/checkbox';
 
 import { useProductStore } from '@/store/store';
 import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
@@ -20,11 +20,11 @@ const productUnits = {
 };
 
 const productCategories = {
-  bakery: ['Padaria', 'bg-myred'],
-  hortifruti: ['Hortifruti', 'bg-mygreen'],
-  protein: ['Proteína', 'bg-myyellow'],
-  beverage: ['Bebida', 'bg-myblue'],
-  grocery: ['Mercearia', 'bg-mypink'],
+  bakery: ['Padaria', 'bg-red-200'],
+  hortifruti: ['Hortifruti', 'bg-green-200'],
+  protein: ['Proteína', 'bg-yellow-200'],
+  beverage: ['Bebida', 'bg-blue-200'],
+  grocery: ['Mercearia', 'bg-orange-200'],
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
@@ -73,12 +73,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="w-full bg-mysecondary rounded-2xl border border-myaccent shadow gap-2 py-4 px-4">
+    <article className="w-full bg-secondary rounded-2xl border border-accent shadow gap-2 py-4 px-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Checkbox
             id={product.id}
-            className="rounded-md h-5 w-5 border-myprimary"
+            className="rounded-md h-5 w-5 border-primary"
             checked={product.checked}
             onCheckedChange={toggleProductStatus}
             aria-label={`Selecionar ${product.name}`}
@@ -87,11 +87,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             <h3
               className={`${
                 product.checked ? 'line-through' : ''
-              } text-md text-myprimary font-bold break-all ...`}
+              } text-md text-primary font-bold break-all ...`}
             >
               {product.name}
             </h3>
-            <p className="text-xs text-mygrey font-semibold break-all ...">
+            <p className="text-xs text-gray-500 font-semibold break-all ...">
               {`${product.quantity} ${productUnits[product.unity]}`}
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center space-x-4">
           <span
-            className={`opacity-75 px-4 py-1 rounded-xl text-sm text-myblack font-semibold ${color}`}
+            className={`opacity-75 px-4 py-1 rounded-xl text-sm text-black font-semibold ${color}`}
           >
             {label}
           </span>
