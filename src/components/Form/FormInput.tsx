@@ -4,6 +4,7 @@ import { FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
 interface FormInputFieldProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   name: string;
   label: string;

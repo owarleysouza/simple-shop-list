@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 
 interface FormSelectFieldProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   name: string;
   label: string;
