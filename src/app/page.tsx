@@ -1,11 +1,9 @@
 'use client';
 
 import ProductCard from '@/components/Product/ProductCard';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -22,82 +20,39 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-
 import { useProductStore } from '@/store/store';
+import { useToast } from '@/hooks/use-toast';
+import { LoaderCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import LoadingComponent from '@/components/commom/Loading';
+import { Product } from '@/types/Product';
 
 const formSchema = z.object({
   name: z.string().min(2).max(30),
-  quantity: z.coerce
-    .number({ message: 'Quantidade inválida' })
-    .int()
-    .positive({ message: 'Quantidade precisa ser positiva' }),
+  quantity: z.coerce.number().int().positive(),
   unity: z.enum(['Un.', 'Kg', 'L']),
   category: z.string(),
 });
-
-import { db } from '@/lib/firebase';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { Product } from '@/types/Product';
-import { useEffect, useState } from 'react';
-import LoadingComponent from '@/components/commom/Loading';
-import { LoaderCircle } from 'lucide-react';
-
-import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const { products, addProduct } = useProductStore();
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingAddProduct, setLoadingAddProduct] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      quantity: 1,
-      unity: 'Un.',
-      category: 'bakery',
-    },
+    defaultValues: { name: '', quantity: 1, unity: 'Un.', category: 'bakery' },
   });
-
-  const { toast } = useToast();
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setLoadingAddProduct(true);
-    const newProduct = {
-      ...values,
-      checked: false,
-    };
-
-    const userId = getOrCreateUserId();
-
-    try {
-      const { id } = await addDoc(collection(db, 'products'), {
-        ...newProduct,
-        userId,
-      });
-
-      addProduct({ ...newProduct, id: id });
-      form.reset();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Ops! Algo de errado aconteceu',
-        description: 'Um erro inesperado aconteceu ao adicionar o produto',
-      });
-      console.error(error);
-    } finally {
-      setLoadingAddProduct(false);
-    }
-  }
 
   function getOrCreateUserId(): string {
     let userId = localStorage.getItem('userId');
-
     if (!userId) {
       userId = crypto.randomUUID();
       localStorage.setItem('userId', userId);
     }
-
     return userId;
   }
 
@@ -108,28 +63,13 @@ export default function Home() {
         collection(db, 'products'),
         where('userId', '==', userId)
       );
-
       const productSnapshot = await getDocs(q);
-
-      productSnapshot.docs.map((doc) => {
-        const product: Product = {
-          id: doc.id,
-          name: doc.data().name,
-          category: doc.data().category,
-          quantity: doc.data().quantity,
-          unity: doc.data().unity,
-          checked: doc.data().checked,
-        };
-        addProduct(product);
-      });
-
+      productSnapshot.docs.forEach((doc) =>
+        addProduct({ ...doc.data(), id: doc.id } as Product)
+      );
       setLoadingProducts(false);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Ops! Algo de errado aconteceu',
-        description: 'Um erro inesperado aconteceu ao carregar os produtos',
-      });
+      toast({ variant: 'destructive', title: 'Erro ao carregar produtos' });
       console.error(error);
     }
   }
@@ -138,9 +78,29 @@ export default function Home() {
     getProductsByUser();
   }, []);
 
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoadingAddProduct(true);
+    const newProduct = { ...values, checked: false };
+    const userId = getOrCreateUserId();
+
+    try {
+      const { id } = await addDoc(collection(db, 'products'), {
+        ...newProduct,
+        userId,
+      });
+      addProduct({ ...newProduct, id });
+      form.reset();
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao adicionar produto' });
+      console.error(error);
+    } finally {
+      setLoadingAddProduct(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-secondary lg:px-64 md:px-32 px-8 py-6">
-      <header className="mb-2">
+      <header>
         <h1 className="text-3xl text-primary font-bold">Lista de Compras</h1>
       </header>
 
@@ -148,36 +108,32 @@ export default function Home() {
         <LoadingComponent />
       ) : (
         <>
-          <section className="py-8">
+          <section className="py-6">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="flex flex-wrap items-end justify-center gap-4"
+                className="flex flex-wrap"
                 aria-label="Formulário de adição de produtos"
               >
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem className="w-1/3 min-w-[150px]">
+                    <FormItem className="w-full md:w-1/3 px-1 min-w-[150px] sm:w-full">
                       <FormLabel htmlFor="product-name">Item</FormLabel>
                       <FormControl className="bg-white">
-                        <Input
-                          {...field}
-                          id="product-name"
-                          className="w-full"
-                        />
+                        <Input {...field} id="product-name" />
                       </FormControl>
                     </FormItem>
                   )}
                 />
 
-                <div className="flex items-center gap-1">
+                <div className="flex flex-row md:w-1/3 px-1 w-full">
                   <FormField
                     control={form.control}
                     name="quantity"
                     render={({ field }) => (
-                      <FormItem className="w-20">
+                      <FormItem>
                         <FormLabel htmlFor="product-quantity">
                           Quantidade
                         </FormLabel>
@@ -185,7 +141,6 @@ export default function Home() {
                           <Input
                             {...field}
                             id="product-quantity"
-                            className="w-full"
                             type="number"
                           />
                         </FormControl>
@@ -197,7 +152,7 @@ export default function Home() {
                     control={form.control}
                     name="unity"
                     render={({ field }) => (
-                      <FormItem className="w-20">
+                      <FormItem>
                         <FormLabel htmlFor="product-unity">Unidade</FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -223,7 +178,7 @@ export default function Home() {
                   control={form.control}
                   name="category"
                   render={({ field }) => (
-                    <FormItem className="w-1/4 min-w-[150px]">
+                    <FormItem className="md:w-1/3 px-1 w-full">
                       <FormLabel htmlFor="product-category">
                         Categoria
                       </FormLabel>
@@ -247,21 +202,23 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-
-                <Button
-                  type="submit"
-                  disabled={loadingAddProduct}
-                  className="bg-accent px-4 rounded-lg"
-                >
-                  {loadingAddProduct ? (
-                    <LoaderCircle className="animate-spin w-[60px]" />
-                  ) : (
-                    'Adicionar'
-                  )}
-                </Button>
+                <div className="w-full md:w-1/8 px-1 flex justify-end items-end mt-1">
+                  <Button
+                    type="submit"
+                    disabled={loadingAddProduct}
+                    className="bg-accent rounded-lg"
+                  >
+                    {loadingAddProduct ? (
+                      <LoaderCircle className="animate-spin" />
+                    ) : (
+                      'Adicionar'
+                    )}
+                  </Button>
+                </div>
               </form>
             </Form>
           </section>
+
           <section className="space-y-4 mb-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -270,7 +227,7 @@ export default function Home() {
         </>
       )}
 
-      <footer className="fixed bottom-0 left-0 w-full flex flex-wrap items-center justify-center">
+      <footer className="fixed bottom-0 left-0 w-full flex items-center justify-center">
         Developed with 🧐 by Warley Soares.
       </footer>
     </main>
